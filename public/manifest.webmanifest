@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+    "name": "Particle Shooting",
+    "short_name": "Particle Shooting",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "gray",
+    "theme_color": "gray",
+    "lang": "ja-JP"
+}

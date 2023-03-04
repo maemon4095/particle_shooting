@@ -1,0 +1,4 @@
+[build]
+target = "public/index.html"
+[watch]
+watch=["./"]
