@@ -19,7 +19,7 @@ pub trait ParticleSystemParameters {
     ) -> f64;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Particle<Props> {
     pub props: Props,
     pub mass: f64,
@@ -49,7 +49,13 @@ impl<P: ParticleSystemParameters> ParticleSystem<P> {
         p1: &Particle<P::Props>,
         delta_time: f64,
     ) -> Vector<f64, 2> {
-        let normal = (p1.position - p0.position).normalized();
+        let delta = p1.position - p0.position;
+        let sqr_len = delta.square_length();
+        if sqr_len < 0.0001 {
+            return v!(0.0, 0.0);
+        }
+        let normal = delta / sqr_len.sqrt();
+
         let tangent = v!(-normal[1], normal[0]);
 
         let f0 = params.external_force(p0, delta_time);
@@ -59,7 +65,7 @@ impl<P: ParticleSystemParameters> ParticleSystem<P> {
         let dv_t = {
             let f0 = f0.dot(tangent);
 
-            f0 / p0.mass * delta_time
+            (f0 / p0.mass) * delta_time
         };
         let dv_n = {
             let f0 = f0.dot(normal);
@@ -84,7 +90,7 @@ impl<P: ParticleSystemParameters> ParticleSystem<P> {
             let mut dv = v!(0.0, 0.0);
             for (j, p1) in source.iter().enumerate() {
                 if i == j {
-                    break;
+                    continue;
                 }
                 dv += Self::calculate_delta_velocity(params, p0, p1, delta_time);
             }

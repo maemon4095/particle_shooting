@@ -1,11 +1,12 @@
 use std::{
     iter::Sum,
     mem::{self, MaybeUninit},
-    ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use super::Sqrt;
 
+#[derive(Debug)]
 pub struct Vector<T: Sized, const N: usize>([T; N]);
 
 impl<T, const N: usize> Index<usize> for Vector<T, N> {
@@ -70,6 +71,21 @@ impl<T: Copy + MulAssign, const N: usize> MulAssign<T> for Vector<T, N> {
     fn mul_assign(&mut self, rhs: T) {
         for i in 0..N {
             self[i] *= rhs;
+        }
+    }
+}
+
+impl<T: Copy + Div, const N: usize> Div<T> for Vector<T, N> {
+    type Output = Vector<T::Output, N>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        unsafe { Vector::unsafe_from_iter(self.iter().map(|&e| e / rhs)) }
+    }
+}
+impl<T: Copy + DivAssign, const N: usize> DivAssign<T> for Vector<T, N> {
+    fn div_assign(&mut self, rhs: T) {
+        for i in 0..N {
+            self[i] /= rhs;
         }
     }
 }

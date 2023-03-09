@@ -1,5 +1,7 @@
 mod app;
+mod closures;
 mod drawing;
+mod glue;
 mod particle_system;
 mod particles;
 fn main() {
