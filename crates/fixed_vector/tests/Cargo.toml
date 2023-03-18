@@ -1,10 +1,9 @@
 [package]
-name = "fixed_vector"
-version = "0.0.0"
+name = "tests"
+version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fixed_vector_generator = { path="generator" }
-fixed_vector_common = { path="common" }
+fixed_vector = { path="../" }

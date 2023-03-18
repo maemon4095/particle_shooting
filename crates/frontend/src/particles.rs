@@ -14,13 +14,16 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 use yew::prelude::*;
 
 use crate::glue::register_animation_frame;
-use crate::particle_system::{Particle, ParticleSystem, ParticleSystemParameters};
-use fixed_vector::{vector as v, Vector};
-// ポテンシャルベースの計算もありかも．ポテンシャルだけだと電磁気力を表現できない．
+use crate::particle_system::{Particle, ParticleSystem, ParticleSystemParameters, Vector2};
+// ポテンシャルベースの計算もありかも．でもポテンシャルだけだと電磁気力を表現できない．
 struct ParticleParam {
     randomness: f64,
     drag: f64,
-    params: FrozenSortedMap<(usize, usize), Vector<f64, 2>>,
+    params: FrozenSortedMap<(usize, usize), Vector2<f64>>,
+}
+
+fn v<T>(x: T, y: T) -> Vector2<T> {
+    Vector2 { x, y }
 }
 
 static KINDS: usize = 6;
@@ -35,7 +38,7 @@ thread_local! {
 impl ParticleSystemParameters for ParticleParam {
     type Props = usize;
 
-    fn external_force(&self, p: &Particle<Self::Props>, delta_time: f64) -> Vector<f64, 2> {
+    fn external_force(&self, p: &Particle<Self::Props>, delta_time: f64) -> Vector2<f64> {
         let r = self.randomness;
         -p.velocity * self.drag + rnd_vec(-r..r)
     }
@@ -55,11 +58,11 @@ impl ParticleSystemParameters for ParticleParam {
 
         let distance = (p_other.position - p_target.position).length();
         if distance < D_0 {
-            params[0] * (distance - D_0)
+            params.x * (distance - D_0)
         } else if distance < D_1 {
-            params[1] * (distance - D_0)
+            params.y * (distance - D_0)
         } else if distance < D_MAX {
-            params[1] * (D_1 - D_0) * (D_MAX - distance) / (D_MAX - D_1)
+            params.y * (D_1 - D_0) * (D_MAX - distance) / (D_MAX - D_1)
         } else {
             0.0
         }
@@ -80,10 +83,9 @@ fn draw(
             "hsl({}, 80%, 50%)",
             p.props as f64 / KINDS as f64 * 360.0
         )));
-        let x = p.position[0];
-        let y = p.position[1];
-        let vx = p.velocity[0];
-        let vy = p.velocity[1];
+
+        let Vector2 { x, y } = p.position;
+        let Vector2 { x: vx, y: vy } = p.velocity;
         context.begin_path();
         context
             .arc(x, y, 3.0, 0.0, std::f64::consts::PI * 2.0)
@@ -98,11 +100,11 @@ fn draw(
     }
 }
 
-fn rnd_vec(range: std::ops::Range<f64>) -> Vector<f64, 2> {
+fn rnd_vec(range: std::ops::Range<f64>) -> Vector2<f64> {
     RANDOM.with(|f| {
         let x = f.borrow_mut().gen_range(range.clone());
         let y = f.borrow_mut().gen_range(range);
-        v!(x, y)
+        v(x, y)
     })
 }
 
@@ -121,7 +123,7 @@ pub fn Particles() -> Html {
                     props: k,
                     mass: 1.0,
                     position: rnd_vec(0.0..500.0),
-                    velocity: v!(0.0, 0.0),
+                    velocity: v(0.0, 0.0),
                 })
             })
             .collect();

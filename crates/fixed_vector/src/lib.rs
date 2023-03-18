@@ -1,4 +1,4 @@
-mod fixed_vector;
 mod sqrt;
-pub use fixed_vector::*;
-pub use sqrt::*;
+extern crate fixed_vector_generator;
+pub use fixed_vector_common::*;
+pub use fixed_vector_generator::*;

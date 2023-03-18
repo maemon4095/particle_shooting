@@ -1,6 +1,35 @@
-use std::mem::swap;
+use std::{mem::swap, ops::Mul};
 
-use fixed_vector::{vector as v, Vector};
+use fixed_vector::{fixed_vector, Sqrt, VectorDot};
+
+#[derive(Debug, Clone, Copy)]
+#[fixed_vector(T; x, y)]
+pub struct Vector2<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T: Mul + Copy> Vector2<T>
+where
+    T::Output: std::iter::Sum,
+{
+    pub fn square_length(self) -> T::Output {
+        self.dot(self)
+    }
+}
+
+impl<T: Mul + Copy> Vector2<T>
+where
+    <T as Mul>::Output: std::iter::Sum + Sqrt,
+{
+    pub fn length(self) -> <<T as Mul>::Output as Sqrt>::Output {
+        self.square_length().sqrt()
+    }
+}
+
+fn v<T>(x: T, y: T) -> Vector2<T> {
+    Vector2 { x, y }
+}
 
 pub struct ParticleSystem<P: ParticleSystemParameters> {
     particles0: Vec<Particle<P::Props>>,
@@ -10,7 +39,7 @@ pub struct ParticleSystem<P: ParticleSystemParameters> {
 
 pub trait ParticleSystemParameters {
     type Props: Clone;
-    fn external_force(&self, p: &Particle<Self::Props>, delta_time: f64) -> Vector<f64, 2>;
+    fn external_force(&self, p: &Particle<Self::Props>, delta_time: f64) -> Vector2<f64>;
     fn internal_force(
         &self,
         p_target: &Particle<Self::Props>,
@@ -23,8 +52,8 @@ pub trait ParticleSystemParameters {
 pub struct Particle<Props> {
     pub props: Props,
     pub mass: f64,
-    pub position: Vector<f64, 2>,
-    pub velocity: Vector<f64, 2>,
+    pub position: Vector2<f64>,
+    pub velocity: Vector2<f64>,
 }
 
 impl<P: ParticleSystemParameters> ParticleSystem<P> {
@@ -48,15 +77,15 @@ impl<P: ParticleSystemParameters> ParticleSystem<P> {
         p0: &Particle<P::Props>,
         p1: &Particle<P::Props>,
         delta_time: f64,
-    ) -> Vector<f64, 2> {
+    ) -> Vector2<f64> {
         let delta = p1.position - p0.position;
         let sqr_len = delta.square_length();
         if sqr_len < 0.0001 {
-            return v!(0.0, 0.0);
+            return v(0.0, 0.0);
         }
         let normal = delta / sqr_len.sqrt();
 
-        let tangent = v!(-normal[1], normal[0]);
+        let tangent = v(-normal.y, normal.x);
 
         let f0 = params.external_force(p0, delta_time);
         let f1 = params.external_force(p1, delta_time);
@@ -87,7 +116,7 @@ impl<P: ParticleSystemParameters> ParticleSystem<P> {
         let target = &mut self.particles1;
 
         for (i, p0) in source.iter().enumerate() {
-            let mut dv = v!(0.0, 0.0);
+            let mut dv = v(0.0, 0.0);
             for (j, p1) in source.iter().enumerate() {
                 if i == j {
                     continue;
